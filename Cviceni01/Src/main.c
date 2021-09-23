@@ -25,27 +25,54 @@
 #endif
 
 uint8_t SOSpole[32] = {1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0};
+uint32_t SOSbinNum = 0b10101001110111011100101010000000;
 
 int main(void)
 {
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 	GPIOA->MODER |= GPIO_MODER_MODER5_0;
 
-	GPIOA->BSRR = (1<<5); // set
-	GPIOA->BRR = (1<<5); // reset
-	GPIOA->ODR ^= (1<<5); // toggle
+//	GPIOA->BSRR = (1<<5); // set
+//	GPIOA->BRR = (1<<5); // reset
+//	GPIOA->ODR ^= (1<<5); // toggle
 
     /* Loop forever */
 	for(;;){
+		//Verze s prochazenim pole iteraci
+//		for(uint8_t i = 0; i < 32; i++){
+//			if (SOSpole[i]){
+//
+//				GPIOA->BSRR = (1<<5); // set
+//			}
+//			else {
+//				GPIOA->BRR = (1<<5); // reset
+//			}
+//			for (volatile uint32_t i = 0; i < 120000; i++) {
+//			}
+//		}
+		//Verze s prochazenim binarniho cisla
+//		for(uint8_t i = 0; i < 32; i++){
+//			if ((SOSbinNum & (1<<i) )){
+//				GPIOA->BSRR = (1<<5); // set
+//			}
+//			else {
+//				GPIOA->BRR = (1<<5); // reset
+//			}
+//			for (volatile uint32_t i = 0; i < 120000; i++) {
+//			}
+//		}
+		//Optimalizovana verze - pry bit shift o promenou neni pro procesor moc cool
+		uint32_t mask = 0x80000000;
 		for(uint8_t i = 0; i < 32; i++){
-			if (SOSpole[i]){
-
+			if (SOSbinNum & mask){
 				GPIOA->BSRR = (1<<5); // set
 			}
 			else {
 				GPIOA->BRR = (1<<5); // reset
 			}
-			for (volatile uint32_t i = 0; i < 70000; i++) {							}
+			mask = mask>>1;
+			for (volatile uint32_t i = 0; i < 120000; i++) {
+			}
 		}
 	}
 }
