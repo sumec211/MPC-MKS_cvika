@@ -97,6 +97,29 @@ void tlacitka(void) {
 
 }
 
+#define DEBOUNCE_TIME (5)
+
+void deBouncing(void){
+	static uint32_t lastBounceRead;
+	static uint16_t debounce = 0xFFFF;
+
+	if(Tick > (lastBounceRead + DEBOUNCE_TIME)){
+
+		if(GPIOC->IDR & (1>>1)){
+			debounce = 0x0001;
+		}
+		else {
+			debounce <<= 1;
+			debounce += (1<<0);
+		}
+		lastBounceRead = Tick;
+	}
+	if (debounce == 0x7FFF){
+//		rozsvit LED
+	}
+}
+
+
 
 
 int main(void)
@@ -127,7 +150,7 @@ int main(void)
 
     /* Loop forever */
 	for(;;){
-//		blikac();
+		blikac();
 		tlacitka();
 
 	}
