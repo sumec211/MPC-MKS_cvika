@@ -60,6 +60,15 @@ static void MX_ADC_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+//static uint32_t delay = HAL_GET_TICK
+//#define DISPLAY_TIME_DELAY (1000)
+//
+//void delay1000(void) {
+//
+//	if (HAL_GetTick() > delay + DISPLAY_TIME_DELAY) {
+//		DISPLAY_TIME_DELAY = HAL_GetTick();
+//	}
+//}
 
 // Promena pro SYROVE hodnoty potenciometru z ADC
 static volatile uint32_t raw_pot;
@@ -73,8 +82,8 @@ static volatile uint32_t bar_value;
 static uint32_t avg_pot;
 //Promene pro ukol 4: aplikace vicekanaloveho ADC
 static uint8_t channel = 0;
-static uint32_t raw_temp;
-static uint32_t raw_volt;
+volatile uint32_t raw_temp;
+volatile uint32_t raw_volt;
 uint32_t voltage;
 uint32_t temperature;
 
@@ -112,14 +121,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
 
 	if (__HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS)) channel = 0;
 	else channel++;
-
-	if (HAL_GPIO_ReadPin(GPIOC, Tlacitko_S1_Pin) == 0){
-	  state = SHOW_TEMP;
-	}
-	if (HAL_GPIO_ReadPin(GPIOC, Tlacitko_S2_Pin) == 0){
-		  state = SHOW_VOLT;
-	}
-
 }
 /* USER CODE END 0 */
 
@@ -199,13 +200,13 @@ int main(void)
 
 //Zobrazeni led displayem
 	  if (state == 0) {
-	  sct_value(display_value, bar_value);
+		  sct_value(display_value, bar_value);
 	  }
 	  else if (state == 1) {
-	  sct_value(temperature, bar_value);
+		  sct_value(temperature, bar_value);
 	  }
 	  else if (state == 2) {
-	  sct_value(voltage, bar_value);
+		  sct_value(voltage, bar_value);
 	  }
 
 
