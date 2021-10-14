@@ -19,11 +19,9 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "sct.h"
-
-
 
 /* Private includes ----------------------------------------------------------*/
+#include "sct.h"
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -63,26 +61,65 @@ static void MX_ADC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+// Promena pro SYROVE hodnoty potenciometru z ADC
+static volatile uint32_t raw_pot;
+
 // Uzivatelske promenne pro zobrazovani na LED
 static volatile uint32_t display_value;
 static volatile uint32_t bar_value;
 
-// Exponencialni kumulace - bereme vetsinu starych vzorku a cas novych - narust hodnot je zprumerovany a jevi se s mirnym zpozdenim
-
+// Promene pro ukol 4: Exponencialni kumulace - bereme vetsinu starych vzorku a cas novych - narust hodnot je zprumerovany a jevi se s mirnym zpozdenim
 #define ADC_Q (13)
-
-
-static volatile uint32_t raw_pot;
 static uint32_t avg_pot;
+//Promene pro ukol 4: aplikace vicekanaloveho ADC
+static uint8_t channel = 0;
+static uint32_t raw_temp;
+static uint32_t raw_volt;
+uint32_t voltage;
+uint32_t temperature;
+
+//konstanty pro prepocet ziskanych hodnot do lidske reci teploty
+/* Temperature sensor calibration value address */
+#define TEMP110_CAL_ADDR ((uint16_t*) ((uint32_t) 0x1FFFF7C2))
+#define TEMP30_CAL_ADDR  ((uint16_t*) ((uint32_t) 0x1FFFF7B8))
+/* Internal voltage reference calibration value address */
+#define VREFINT_CAL_ADDR ((uint16_t*) ((uint32_t) 0x1FFFF7BA))
+
+//Promena state pro udani pozadovaneho stavu
+static enum { SHOW_POT, SHOW_VOLT, SHOW_TEMP } state = SHOW_POT;
+
+
+
 
 // tato callback se deje v interrupt rezimu
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc) {
-	raw_pot = HAL_ADC_GetValue(hadc);
 
-//ukol 3 - pouziti exponencialni kumulace
-	raw_pot = avg_pot >> ADC_Q;
-	avg_pot -= raw_pot;
-	avg_pot += HAL_ADC_GetValue(hadc);
+	if (channel == 0) {
+		raw_pot = HAL_ADC_GetValue(hadc);
+
+		//ukol 3 - pouziti exponencialni kumulace
+		raw_pot = avg_pot >> ADC_Q;
+		avg_pot -= raw_pot;
+		avg_pot += HAL_ADC_GetValue(hadc);
+	}
+	else if (channel == 1) {
+		raw_temp = HAL_ADC_GetValue(hadc);
+	}
+	else if (channel == 2) {
+		raw_volt = HAL_ADC_GetValue(hadc);
+	}
+
+
+	if (__HAL_ADC_GET_FLAG(hadc, ADC_FLAG_EOS)) channel = 0;
+	else channel++;
+
+	if (HAL_GPIO_ReadPin(GPIOC, Tlacitko_S1_Pin) == 0){
+	  state = SHOW_TEMP;
+	}
+	if (HAL_GPIO_ReadPin(GPIOC, Tlacitko_S2_Pin) == 0){
+		  state = SHOW_VOLT;
+	}
+
 }
 /* USER CODE END 0 */
 
@@ -135,11 +172,44 @@ int main(void)
   while (1)
   {
 
-// Prepocet hodnoty do uzivatelem stanovenych mezi
+	  voltage = 330 * (*VREFINT_CAL_ADDR) / raw_volt;
+	  temperature = (raw_temp - (int32_t)(*TEMP30_CAL_ADDR));
+	  temperature = temperature * (int32_t)(110 - 30);
+	  temperature = temperature / (int32_t)(*TEMP110_CAL_ADDR - *TEMP30_CAL_ADDR);
+	  temperature = temperature + 30;
+
+// Prepocet hodnot do uzivatelem stanovenych mezi
 	  display_value = (raw_pot * 501)/4096;
 	  bar_value = (raw_pot*8)/4000;
+
+// Cteni tlacitek pomoci HAL funkce
+	  if (HAL_GPIO_ReadPin(GPIOC, Tlacitko_S1_Pin) == 0){
+		  state = SHOW_TEMP;
+	  }
+	  else if (HAL_GPIO_ReadPin(GPIOC, Tlacitko_S2_Pin) == 0){
+	  		  state = SHOW_VOLT;
+	  }
+	  else {
+		  state = SHOW_POT;
+	  }
+
+//  	  ((HAL_GPIO_ReadPin(GPIOC, Tlacitko_S2_Pin) || HAL_GPIO_ReadPin(GPIOC, Tlacitko_S1_Pin)) == 0){
+//  	  		  state = SHOW_POT;
+
+
 //Zobrazeni led displayem
+	  if (state == 0) {
 	  sct_value(display_value, bar_value);
+	  }
+	  else if (state == 1) {
+	  sct_value(temperature, bar_value);
+	  }
+	  else if (state == 2) {
+	  sct_value(voltage, bar_value);
+	  }
+
+
+//	  sct_value(HAL_GPIO_ReadPin(GPIOC, Tlacitko_S1_Pin), HAL_GPIO_ReadPin(GPIOC, Tlacitko_S1_Pin));
 
 
 
@@ -238,6 +308,20 @@ static void MX_ADC_Init(void)
   {
     Error_Handler();
   }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel to be converted.
+  */
+  sConfig.Channel = ADC_CHANNEL_VREFINT;
+  if (HAL_ADC_ConfigChannel(&hadc, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE BEGIN ADC_Init 2 */
 
   /* USER CODE END ADC_Init 2 */
@@ -305,6 +389,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Tlacitko_S1_Pin Tlacitko_S2_Pin */
+  GPIO_InitStruct.Pin = Tlacitko_S1_Pin|Tlacitko_S2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LD2_Pin */
   GPIO_InitStruct.Pin = LD2_Pin;
