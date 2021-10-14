@@ -61,14 +61,21 @@ static void MX_ADC_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 //static uint32_t delay = HAL_GET_TICK
-//#define DISPLAY_TIME_DELAY (1000)
-//
-//void delay1000(void) {
-//
-//	if (HAL_GetTick() > delay + DISPLAY_TIME_DELAY) {
-//		DISPLAY_TIME_DELAY = HAL_GetTick();
-//	}
-//}
+#define DISPLAY_TIME_DELAY (1000)
+volatile uint32_t delay = HAL_GetTick();
+
+
+uint8_t delay1000(void) {
+	uint8_t button;
+
+	if (HAL_GetTick() > delay + DISPLAY_TIME_DELAY) {
+		delay = HAL_GetTick();
+		button = 1;
+	}
+	else {
+		button = 0;
+	}
+}
 
 // Promena pro SYROVE hodnoty potenciometru z ADC
 static volatile uint32_t raw_pot;
