@@ -33,7 +33,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define CONVERT_T_DELAY (750)
+//#define CONVERT_T_DELAY (750)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -71,7 +71,7 @@ static void MX_ADC_Init(void);
 
 
 //Promena state pro udani pozadovaneho stavu
- static enum {SHOW_0, SHOW_NTCC, SHOW_DS18B20} state = SHOW_0;
+ static enum {SHOW_ZERO, SHOW_NTCC, SHOW_DS18B20} state = SHOW_ZERO;
 
 
 /* USER CODE END 0 */
@@ -123,7 +123,7 @@ int main(void)
 	 HAL_Delay(CONVERT_T_DELAY);
 	 OWReadTemperature(&temp_18b20);
 	 pointerToLookup = HAL_ADC_GetValue(&hadc);
-	 display_value = NTCLookup[pointerToLookup];
+//	 display_value = NTCLookup[pointerToLookup];
 //	 display_value = temp_18b20/10;
 //	 sct_value(display_value,1);
 
@@ -136,18 +136,21 @@ int main(void)
 	 	  		  state = SHOW_NTCC;
 	 	  }
 	 	  else {
-	 		  state =  SHOW_0;
+	 		 // state =  SHOW_ZERO;
 	 	  }
 
-
+//
 		  if (state == 0) {
-			  sct_value(display_value, 0);
+			  sct_value(0, 0);
 		  }
 		  else if (state == 1) {
+			  display_value = NTCLookup[pointerToLookup];
 			  sct_value(display_value, 1);
 		  }
 		  else if (state == 2) {
+			  display_value = temp_18b20/10;
 			  sct_value(display_value, 2);
+		  }
 
     /* USER CODE END WHILE */
 
