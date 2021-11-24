@@ -450,12 +450,19 @@ void StartAcceleroTask(void const * argument)
 	uint8_t samples;
 	int16_t raw_acceleration[3];
 	lis2dw12_fifo_data_level_get(&lis2dw12, &samples);
+	osDelay(50);
 	for (uint8_t i = 0; i < samples; i++) {
 	 // Read acceleration data
 	 lis2dw12_acceleration_raw_get(&lis2dw12, raw_acceleration);
+	 if (i == (samples-1)){
+//	Implemntation of sending X accelorometer values to xQueue
+		 xQueueSend(xVisualQueueHandle, &raw_acceleration[0], 0);
+	 }
 	}
+
+
   printf("X=%d Y=%d Z=%d\n", raw_acceleration[0], raw_acceleration[1], raw_acceleration[2]);
-  osDelay(500);
+  osDelay(1000);
   }
   /* USER CODE END StartAcceleroTask */
 }
