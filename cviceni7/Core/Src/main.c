@@ -424,6 +424,7 @@ void StartAcceleroTask(void const * argument)
   /* USER CODE BEGIN StartAcceleroTask */
 
 	// Check device ID
+	uint32_t Tick;
 	uint8_t whoamI = 0;
 	lis2dw12_device_id_get(&lis2dw12, &whoamI);
 	printf("LIS2DW12_ID %s\n", (whoamI == LIS2DW12_ID) ? "OK" : "FAIL");
@@ -460,6 +461,10 @@ void StartAcceleroTask(void const * argument)
 	 }
 	}
 
+	if (HAL_GetTick()>(Tick+1000)){
+		printf("X=%d Y=%d Z=%d\n", raw_acceleration[0], raw_acceleration[1], raw_acceleration[2]);
+		Tick = HAL_GetTick();
+	}
 
   printf("X=%d Y=%d Z=%d\n", raw_acceleration[0], raw_acceleration[1], raw_acceleration[2]);
   osDelay(1000);
