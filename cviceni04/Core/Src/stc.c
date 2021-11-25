@@ -42,6 +42,9 @@ static const uint32_t reg_values[4][10] = {
 				0b0000010000110000 << 0,
 				0b0000011111110000 << 0,
 				0b0000011011110000 << 0,
+
+
+
 		},
 		{
 				//PCDE--------GFAB @ DIS3
@@ -102,3 +105,16 @@ void sct_value(uint16_t value, uint8_t led)
 	reg |= reg_values[3][led];
 	sct_led(reg);
 }
+
+void sct_value_temp(uint16_t value, uint8_t led)
+{
+	uint32_t reg = 0;
+
+	reg |= reg_values[0][value / 100 % 10];
+	reg |= reg_values[1][value / 10 % 10];
+	reg |= reg_values[2][value / 1 % 10];
+	//rozsviceni led nad segmentovym displejem modulu
+	reg |= reg_values[3][led];
+	sct_led(reg);
+}
+

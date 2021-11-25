@@ -24,6 +24,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_hid.h"
+#include <math.h>
+#include <stdbool.h>
 
 /* USER CODE END Includes */
 
@@ -60,6 +62,72 @@ static void MX_USART3_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void step(int  x,  int  y,  bool  btn){
+	uint8_t buff[4];
+	if(btn == 1){
+		buff[0] = 0x01; // stiskni leve tlacitko
+	}
+	else {
+		buff[0] = 0x00;
+	}
+	buff[1] = (int8_t)(x);
+	buff[2] = (int8_t)(y);
+	buff[3] = 0; // bez scrollu
+	USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+	HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+}
+
+static void drawCircle(float radius, float maxPhi, float minPhi){
+	float x, y, dx, dy;
+	int16_t sx = 0;
+	int16_t sy = (int16_t)(radius);
+	float radStep = (2*maxPhi)/35;
+	for(float phi = minPhi; phi < 2*maxPhi; phi = phi+radStep){
+		x = radius*cos(phi);
+		y = radius*sin(phi);
+
+
+		dx = x-sx;
+		dy = y-sy;
+
+		step(dx,  dy,  1);
+
+		sx = sx+dx;
+		sy = sy+dy;
+	}
+}
+
+static void drawSmile(float faceSize){
+
+// Positive values - LEFT, DOWN
+// Negative values / RIGHT, UP
+	step(0, 0, 0);
+	drawCircle(faceSize, M_PI, 0);
+//	Left eye
+	step(0, 0,  0);
+	step(-faceSize/2, -faceSize/5,  0);
+	step(faceSize/5, 0,  0);
+	drawCircle(faceSize/6, M_PI, 0);
+//	Right eye
+	step(0, 0,  0);
+	step(-(faceSize/6+faceSize/2), 0,  0);
+	drawCircle(faceSize/6, M_PI, 0);
+//nose
+	step(0, 0,  0);
+	step(faceSize/4, faceSize/3,  0);
+	step(0, 0, 1);
+	step(0, faceSize/5, 1);
+
+
+//SMIIILLLEEE
+	step(0, 0,  0);
+	step(faceSize/3, faceSize/5,  0);
+	step(0, 0, 1);
+//	drawCircle(faceSize/6, M_PI, 0);
+	drawCircle(faceSize*0.8, M_PI*0.2, M_PI*0.6);
+
+	step(0, 0,  0);
+}
 
 /* USER CODE END 0 */
 
@@ -70,6 +138,7 @@ static void MX_USART3_UART_Init(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+
 
   /* USER CODE END 1 */
 
@@ -105,15 +174,15 @@ int main(void)
 
 	do {HAL_Delay(40); }
 	while(!HAL_GPIO_ReadPin(USER_Btn_GPIO_Port, USER_Btn_Pin));
+	drawSmile(80);
 
-
-	uint8_t buff[4];
-	buff[0] = 0x01; // stiskni leve tlacitko
-	buff[1] = (int8_t)(10); // posun X +10
-	buff[2] = (int8_t)(-3); // posun Y -3
-	buff[3] = 0; // bez scrollu
-	USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
-	HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS));
+//	uint8_t buff[4];
+//	buff[0] = 0x01; // stiskni leve tlacitko
+//	buff[1] = (int8_t)(10); // posun X +10
+//	buff[2] = (int8_t)(-3); // posun Y -3
+//	buff[3] = 0; // bez scrollu
+//	USBD_HID_SendReport(&hUsbDeviceFS, buff, sizeof(buff));
+//	HAL_Delay(USBD_HID_GetPollingInterval(&hUsbDeviceFS));
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

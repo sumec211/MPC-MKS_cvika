@@ -20,12 +20,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "lis2dw12_reg.h"
-#include <stdio.h>
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "lis2dw12_reg.h"
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -400,14 +400,14 @@ void StartVisualTask(void const * argument)
 			  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
 		  }
 
-		  if(msg < 1000) {
+		  if(msg > 1000) {
 			  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_SET);
 		  }
 		  else {
 			  HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, GPIO_PIN_RESET);
 		  }
 	  }
-	  osDelay(300);
+	//  osDelay(300);
   }
   /* USER CODE END StartVisualTask */
 }
@@ -456,7 +456,7 @@ void StartAcceleroTask(void const * argument)
 	 // Read acceleration data
 	 lis2dw12_acceleration_raw_get(&lis2dw12, raw_acceleration);
 	 if (i == (samples-1)){
-//	Implemntation of sending X accelorometer values to xQueue
+//	Implementation of sending X accelorometer values to xQueue
 		 xQueueSend(xVisualQueueHandle, &raw_acceleration[0], 0);
 	 }
 	}
@@ -466,8 +466,8 @@ void StartAcceleroTask(void const * argument)
 		Tick = HAL_GetTick();
 	}
 
-  printf("X=%d Y=%d Z=%d\n", raw_acceleration[0], raw_acceleration[1], raw_acceleration[2]);
-  osDelay(1000);
+ // printf("X=%d Y=%d Z=%d\n", raw_acceleration[0], raw_acceleration[1], raw_acceleration[2]);
+  osDelay(50);
   }
   /* USER CODE END StartAcceleroTask */
 }
