@@ -1,31 +1,25 @@
 
 #include "stm32f0xx.h"
 #include "sct.h"
-
-#define sct_nla(x) do { if (x) GPIOB->BSRR = (1 << 5); else GPIOB->BRR = (1 << 5); } while (0)
-#define sct_sdi(x) do { if (x) GPIOB->BSRR = (1 << 5); else GPIOB->BRR = (1 << 5); } while (0)
-#define sct_clk(x) do { if (x) GPIOB->BSRR = (1 << 5); else GPIOB->BRR = (1 << 5); } while (0)
+#include "main.h"
 
 void sct_init(void)
 {
-	RCC->AHBENR =| RCC_AHBENR_GPIOBEN;
-
-//	GPIOB spustime porty na vystupuni
-//	aktivujeme output enable
-//	nastavime vychozi hodnotu
+	sct_led(0);
+	HAL_GPIO_WritePin(SCT_NOE_GPIO_Port, SCT_NOE_Pin, 0);
 }
 
 void sct_led(uint32_t value){
 	for(uint8_t j = 0; j < 32; j++){
-		sct_sdi(value & 1);
+		HAL_GPIO_WritePin(SCT_SDI_GPIO_Port, SCT_SDI_Pin, value & 1);
 		value >>= 1;
 //		Geneze 1 hodinoveho pulzu
-		sct_clk(1);
-		sct_clk(0);
+		HAL_GPIO_WritePin(SCT_CLK_GPIO_Port, SCT_CLK_Pin, 1);
+		HAL_GPIO_WritePin(SCT_CLK_GPIO_Port, SCT_CLK_Pin, 0);
 	}
 //	Geneze pulzu na signalu nla pro prepis registru na vystup
-	sct_nla(1);
-	sct_nla(0);
+	HAL_GPIO_WritePin(SCT_NLA_GPIO_Port, SCT_NLA_Pin, 1);
+	HAL_GPIO_WritePin(SCT_NLA_GPIO_Port, SCT_NLA_Pin, 0);
 }
 
 void sct_value(uint16_t value)
