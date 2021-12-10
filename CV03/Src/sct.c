@@ -9,11 +9,12 @@
 
 void sct_init(void)
 {
-	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
-	GPIOB->MODER |= GPIO_MODER_MODER3_0 | GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 | GPIO_MODER_MODER10_0;
 //	GPIOB spustime porty na vystupuni
 //	aktivujeme output enable
 //	nastavime vychozi hodnotu
+
+	RCC->AHBENR |= RCC_AHBENR_GPIOBEN;
+	GPIOB->MODER |= GPIO_MODER_MODER3_0 | GPIO_MODER_MODER4_0 | GPIO_MODER_MODER5_0 | GPIO_MODER_MODER10_0;
 }
 
 void sct_led(uint32_t value){
